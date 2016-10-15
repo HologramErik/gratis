@@ -22,6 +22,11 @@
 #include <Energia.h>
 #else
 #include <Arduino.h>
+  #if defined(ARDUINO_DASH) || defined(ARDUINO_DASH_PRO)
+    #ifndef HOLOGRAM_DASH
+      #define HOLOGRAM_DASH
+    #endif
+  #endif
 #endif
 
 #include <SPI.h>

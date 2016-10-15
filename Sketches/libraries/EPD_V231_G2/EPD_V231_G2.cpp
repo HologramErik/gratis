@@ -339,7 +339,9 @@ void EPD_Class::power_off(void) {
 
 	// ensure SPI MOSI and CLOCK are Low before CS Low
 	SPI_off();
+#ifndef HOLOGRAM_DASH
 	digitalWrite(this->EPD_Pin_EPD_CS, LOW);
+#endif
 
 	// pulse discharge pin
 	digitalWrite(this->EPD_Pin_DISCHARGE, HIGH);
@@ -710,6 +712,9 @@ void EPD_Class::line(uint16_t line, const uint8_t *data, uint8_t fixed_value, bo
 
 
 static void SPI_on(void) {
+#ifdef HOLOGRAM_DASH
+	SPI.begin();
+#else
 	SPI.end();
 	SPI.begin();
 	SPI.setBitOrder(MSBFIRST);
@@ -724,10 +729,14 @@ static void SPI_on(void) {
 	SPI_put(0x00);
 	Delay_us(10);
 //	spi_is_on = true;
+#endif
 }
 
 
 static void SPI_off(void) {
+#ifdef HOLOGRAM_DASH
+    SPI.end();
+#else
 	// SPI.begin();
 	// SPI.setBitOrder(MSBFIRST);
 	SPI.setDataMode(SPI_MODE0);
@@ -736,6 +745,7 @@ static void SPI_off(void) {
 	SPI_put(0x00);
 	Delay_us(10);
 	SPI.end();
+#endif
 }
 
 
@@ -745,22 +755,32 @@ static void SPI_put(uint8_t c) {
 
 
 static void SPI_send(uint8_t cs_pin, const uint8_t *buffer, uint16_t length) {
+#ifdef HOLOGRAM_DASH
+	SPI.beginTransaction(cs_pin, SPISettings(8000000, MSBFIRST, SPI_MODE0));
+#else
 	// CS low
 	digitalWrite(cs_pin, LOW);
-
+#endif
 	// send all data
 	for (uint16_t i = 0; i < length; ++i) {
 		SPI_put(*buffer++);
 	}
-
+#ifdef HOLOGRAM_DASH
+	SPI.endTransaction();
+#else
 	// CS high
 	digitalWrite(cs_pin, HIGH);
+#endif
 }
 
 #define DEBUG_SPI_READ 0
 static uint8_t SPI_read(uint8_t cs_pin, const uint8_t *buffer, uint16_t length) {
+#ifdef HOLOGRAM_DASH
+    SPI.beginTransaction(cs_pin, SPISettings(8000000, MSBFIRST, SPI_MODE0));
+#else
 	// CS low
 	digitalWrite(cs_pin, LOW);
+#endif
 
 #if DEBUG_SPI_READ
 	uint8_t rbuffer[16];
@@ -777,8 +797,12 @@ static uint8_t SPI_read(uint8_t cs_pin, const uint8_t *buffer, uint16_t length) 
 #endif
 	}
 
+#ifdef HOLOGRAM_DASH
+    SPI.endTransaction();
+#else
 	// CS high
 	digitalWrite(cs_pin, HIGH);
+#endif
 
 #if DEBUG_SPI_READ
 	Serial.print("SPI read:");
